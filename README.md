@@ -1,2 +1,2 @@
 # SSHCommandStreamer
-Streaming library to cover pamarikob 
+Streaming library to create python scripts to stream ssh commands
