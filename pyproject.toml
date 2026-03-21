@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "sshcommandstreamer"
+version = "1.0.0"
+description = "SSH command streamer with real-time output and file upload support"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+dependencies = ["paramiko"]

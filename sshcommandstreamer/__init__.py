@@ -1,7 +1,7 @@
 import paramiko
 from typing import List, Optional
 
-version = "1.0.0"
+__version__ = "1.0.0"
 
 
 class SSHCommandStreamer:
@@ -15,7 +15,7 @@ class SSHCommandStreamer:
         self.password = password
         self.port = port
         self.client: Optional[paramiko.SSHClient] = None
-        print(f"SSHCommandStreamer version {version} initialized")
+        print(f"SSHCommandStreamer version {__version__} initialized")
 
     def connect(self):
         self.client = paramiko.SSHClient()
@@ -24,7 +24,6 @@ class SSHCommandStreamer:
             'hostname': self.hostname,
             'port': self.port,
             'username': self.username,
-            # 'password' will only be included if not None
         }
         if self.password is not None:
             connect_kwargs['password'] = self.password
@@ -35,7 +34,7 @@ class SSHCommandStreamer:
         if not self.client:
             raise RuntimeError("SSH client not connected. Call connect() first.")
         for command in commands:
-            print(f"\n####################################")            
+            print(f"\n####################################")
             print(f"[Running] {command}")
             print(f"#####################################")
             if command.startswith("!UPLOAD!"):
@@ -52,12 +51,12 @@ class SSHCommandStreamer:
                 except Exception as e:
                     print(f"[Upload Failed] {e}")
                 continue
-           
+
             stdin, stdout, stderr = self.client.exec_command(command)
             # Stream stdout in real-time
             for line in iter(stdout.readline, ""):
                 print(line, end="")
-            # Optionally, stream stderr as well
+            # Stream stderr as well
             for line in iter(stderr.readline, ""):
                 print(line, end="")
             exit_status = stdout.channel.recv_exit_status()
@@ -70,44 +69,20 @@ class SSHCommandStreamer:
         try:
             # Expand ~ to remote home directory if present
             if remote_path == "~":
-                home = sftp.normalize("~")
-                remote_path = home
+                remote_path = sftp.normalize("~")
             elif remote_path.startswith("~/"):
                 home = sftp.normalize("~")
-                # Always remove exactly the ~/ prefix
                 rest = remote_path[2:]
-                remote_path = home.rstrip("/~") + "/" + rest.lstrip("/")
-            # Remove any accidental double slashes except for protocol (not expected here)
-            while '//' in remote_path.replace('://', '##'):  # avoid breaking protocol
-                remote_path = remote_path.replace('//', '/')
+                remote_path = home.rstrip("/") + "/" + rest.lstrip("/")
+            # Remove any accidental double slashes
+            while "//" in remote_path:
+                remote_path = remote_path.replace("//", "/")
             print(f"[DEBUG] Final remote_path for upload: {remote_path}")
             sftp.put(local_path, remote_path)
         finally:
             sftp.close()
-           
 
     def close(self):
         if self.client:
             self.client.close()
             self.client = None
-
-# Example usage
-if __name__ == "__main__":
-    import getpass
-    host = input("Server: ")
-    user = input("Username: ")
-    pwd = getpass.getpass("Password: ")
-    commands = [
-        "!UPLOAD! C:\\SSHCommandStreamer\\sample_upload.txt ~/sample_upload.txt",
-        "uname -a",
-        "whoami",
-        "ls -l"
-    ]
-    streamer = SSHCommandStreamer(host, user, pwd)
-    try:
-        streamer.connect()
-        streamer.execute_commands(commands)
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        streamer.close()
