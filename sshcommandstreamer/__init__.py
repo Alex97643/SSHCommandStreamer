@@ -1,7 +1,24 @@
+
 import paramiko
 from typing import List, Optional
+import os
+import re
 
-__version__ = "1.0.0"
+# Dynamically extract version from pyproject.toml
+def _get_version():
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    pyproject_path = os.path.join(root, "pyproject.toml")
+    try:
+        with open(pyproject_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        match = re.search(r'^version\s*=\s*"([^"]+)"', content, re.MULTILINE)
+        if match:
+            return match.group(1)
+    except Exception:
+        pass
+    return "unknown"
+
+__version__ = _get_version()
 
 
 class SSHCommandStreamer:

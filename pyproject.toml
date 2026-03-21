@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sshcommandstreamer"
-version = "1.0.0"
+version = "1.0.1"
 description = "SSH command streamer with real-time output and file upload support"
 readme = "README.md"
 requires-python = ">=3.7"

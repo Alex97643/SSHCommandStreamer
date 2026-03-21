@@ -1,6 +1,6 @@
 # SSH Command Streamer
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 This project is a simple SSH command streamer that allows you to execute commands on a remote server and stream the output in real-time, waiting for each command to finish before sending the next. It is built using Python and the Paramiko library.
 
