@@ -11,6 +11,18 @@ This project is a simple SSH command streamer that allows you to execute command
 - Ability to specify the remote server, username, and password
 - Upload files to the remote server using a special command
 
+## Error Handling
+
+You can configure SSHCommandStreamer to abort execution if any command fails by setting the `abort_on_error` flag when creating the instance:
+
+```python
+streamer = SSHCommandStreamer(host, user, pwd, abort_on_error=True)
+```
+
+If `abort_on_error` is True, the command sequence will stop at the first error and no further commands will be executed.
+
+**Default:** `abort_on_error=False` (continues on error)
+
 ## Usage
 
 ### Basic Example

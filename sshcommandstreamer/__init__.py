@@ -9,13 +9,14 @@ class SSHCommandStreamer:
     SSHCommandStreamer allows executing multiple commands on a remote server via SSH,
     streaming output in real-time and handling sequential execution.
     """
-    def __init__(self, hostname: str, username: str, password: Optional[str] = None, port: int = 22):
+    def __init__(self, hostname: str, username: str, password: Optional[str] = None, port: int = 22, abort_on_error: bool = False):
         self.hostname = hostname
         self.username = username
         self.password = password
         self.port = port
+        self.abort_on_error = abort_on_error
         self.client: Optional[paramiko.SSHClient] = None
-        print(f"SSHCommandStreamer version {__version__} initialized")
+        print(f"SSHCommandStreamer version {__version__} initialized (abort_on_error={self.abort_on_error})")
 
     def connect(self):
         self.client = paramiko.SSHClient()
@@ -42,6 +43,9 @@ class SSHCommandStreamer:
                 parts = command.split(maxsplit=2)
                 if len(parts) != 3:
                     print(f"[UPLOAD ERROR] Invalid syntax: {command}")
+                    if self.abort_on_error:
+                        print("[ABORT] Aborting due to error.")
+                        break
                     continue
                 local_path, remote_path = parts[1], parts[2]
                 print(f"\n[Uploading] {local_path} -> {remote_path}")
@@ -50,6 +54,9 @@ class SSHCommandStreamer:
                     print(f"[Upload Success] {local_path} -> {remote_path}")
                 except Exception as e:
                     print(f"[Upload Failed] {e}")
+                    if self.abort_on_error:
+                        print("[ABORT] Aborting due to error.")
+                        break
                 continue
 
             stdin, stdout, stderr = self.client.exec_command(command)
@@ -61,6 +68,9 @@ class SSHCommandStreamer:
                 print(line, end="")
             exit_status = stdout.channel.recv_exit_status()
             print(f"[Exit status] {exit_status}")
+            if exit_status != 0 and self.abort_on_error:
+                print("[ABORT] Aborting due to error.")
+                break
 
     def upload_file(self, local_path: str, remote_path: str):
         if not self.client:
