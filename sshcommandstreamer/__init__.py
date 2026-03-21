@@ -99,6 +99,7 @@ class SSHCommandStreamer:
                 remote_path = sftp.normalize("~")
             elif remote_path.startswith("~/"):
                 home = sftp.normalize("~")
+                home = home.rstrip("~")
                 rest = remote_path[2:]
                 remote_path = home.rstrip("/") + "/" + rest.lstrip("/")
             # Remove any accidental double slashes
