@@ -1,6 +1,6 @@
 # SSH Command Streamer
 
-**Version:** 1.0.1
+**Version:** 1.0.3
 
 This project is a simple SSH command streamer that allows you to execute commands on a remote server and stream the output in real-time, waiting for each command to finish before sending the next. It is built using Python and the Paramiko library.
 
@@ -10,6 +10,7 @@ This project is a simple SSH command streamer that allows you to execute command
 - Handle multiple commands sequentially
 - Ability to specify the remote server, username, and password
 - Upload files to the remote server using a special command
+- Download files from the remote server using a special command
 
 ## Error Handling
 
@@ -34,6 +35,7 @@ user = "<username>"
 pwd = "<password>"  # or None for key-based auth
 commands = [
     "!UPLOAD! local_file.txt ~/remote_file.txt",  # Upload a file
+    "!DOWNLOAD! ~/remote_file.txt downloaded_file.txt",  # Download a file
     "echo 'Hello from remote!'",
     "uname -a",
     "whoami",
@@ -52,6 +54,9 @@ finally:
 - To upload a file, add a command in the form:
   - `!UPLOAD! <local_file_path> <remote_file_path>`
   - Example: `!UPLOAD! sample_upload.txt ~/sample_upload.txt`
+- To download a file, add a command in the form:
+  - `!DOWNLOAD! <remote_file_path> <local_file_path>`
+  - Example: `!DOWNLOAD! ~/sample_upload.txt downloaded_sample.txt`
 - The `~` in the remote path will be expanded to the remote user's home directory.
 
 ## API
@@ -68,9 +73,10 @@ SSHCommandStreamer(hostname: str, username: str, password: Optional[str] = None,
 
 #### Methods
 - `connect()`: Establishes the SSH connection.
-- `execute_commands(commands: List[str])`: Executes a list of commands sequentially. Handles `!UPLOAD!` commands for file upload.
+- `execute_commands(commands: List[str])`: Executes a list of commands sequentially. Handles `!UPLOAD!` and `!DOWNLOAD!` commands for file upload and download.
 - `close()`: Closes the SSH connection.
 - `upload_file(local_path: str, remote_path: str)`: Uploads a file to the remote server. Expands `~` in the remote path to the user's home directory.
+- `download_file(remote_path: str, local_path: str)`: Downloads a file from the remote server. Expands `~` in the remote path to the user's home directory.
 
 ## Requirements
 - Python 3.7+

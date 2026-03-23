@@ -75,6 +75,26 @@ class SSHCommandStreamer:
                         print("[ABORT] Aborting due to error.")
                         break
                 continue
+            if command.startswith("!DOWNLOAD!"):
+                # Parse download command: !DOWNLOAD! [remote file] [local file]
+                parts = command.split(maxsplit=2)
+                if len(parts) != 3:
+                    print(f"[DOWNLOAD ERROR] Invalid syntax: {command}")
+                    if self.abort_on_error:
+                        print("[ABORT] Aborting due to error.")
+                        break
+                    continue
+                remote_path, local_path = parts[1], parts[2]
+                print(f"\n[Downloading] {remote_path} -> {local_path}")
+                try:
+                    self.download_file(remote_path, local_path)
+                    print(f"[Download Success] {remote_path} -> {local_path}")
+                except Exception as e:
+                    print(f"[Download Failed] {e}")
+                    if self.abort_on_error:
+                        print("[ABORT] Aborting due to error.")
+                        break
+                continue
 
             stdin, stdout, stderr = self.client.exec_command(command)
             # Stream stdout in real-time
@@ -88,25 +108,42 @@ class SSHCommandStreamer:
             if exit_status != 0 and self.abort_on_error:
                 print("[ABORT] Aborting due to error.")
                 break
+    def _normalize_remote_path(self, sftp, remote_path: str) -> str:
+        """
+        Normalize remote path, expanding ~ and removing double slashes.
+        """
+        # Expand ~ to remote home directory if present
+        if remote_path == "~":
+            remote_path = sftp.normalize("~")
+        elif remote_path.startswith("~/"):
+            home = sftp.normalize("~")
+            home = home.rstrip("~")
+            rest = remote_path[2:]
+            remote_path = home.rstrip("/") + "/" + rest.lstrip("/")
+        # Remove any accidental double slashes
+        while "//" in remote_path:
+            remote_path = remote_path.replace("//", "/")
+        return remote_path
+
+    def download_file(self, remote_path: str, local_path: str):
+        if not self.client:
+            raise RuntimeError("SSH client not connected. Call connect() first.")
+        sftp = self.client.open_sftp()
+        try:
+            normalized_path = self._normalize_remote_path(sftp, remote_path)
+            print(f"[DEBUG] Final remote_path for download: {normalized_path}")
+            sftp.get(normalized_path, local_path)
+        finally:
+            sftp.close()
 
     def upload_file(self, local_path: str, remote_path: str):
         if not self.client:
             raise RuntimeError("SSH client not connected. Call connect() first.")
         sftp = self.client.open_sftp()
         try:
-            # Expand ~ to remote home directory if present
-            if remote_path == "~":
-                remote_path = sftp.normalize("~")
-            elif remote_path.startswith("~/"):
-                home = sftp.normalize("~")
-                home = home.rstrip("~")
-                rest = remote_path[2:]
-                remote_path = home.rstrip("/") + "/" + rest.lstrip("/")
-            # Remove any accidental double slashes
-            while "//" in remote_path:
-                remote_path = remote_path.replace("//", "/")
-            print(f"[DEBUG] Final remote_path for upload: {remote_path}")
-            sftp.put(local_path, remote_path)
+            normalized_path = self._normalize_remote_path(sftp, remote_path)
+            print(f"[DEBUG] Final remote_path for upload: {normalized_path}")
+            sftp.put(local_path, normalized_path)
         finally:
             sftp.close()
 

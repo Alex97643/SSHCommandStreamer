@@ -1,0 +1,4 @@
+host: hostname_or_ip
+user: username
+password: password_or_none
+folder: folder_path
